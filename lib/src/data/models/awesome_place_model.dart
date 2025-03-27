@@ -8,10 +8,12 @@ AwesomePlacesSearchModel awesomePlacesModelFromJson(String str) =>
 class AwesomePlacesSearchModel {
   final List<PredictionModel>? predictions;
   final String? status;
+  String? sessionToken;
 
   AwesomePlacesSearchModel({
     this.predictions,
     this.status,
+    this.sessionToken,
   });
 
   factory AwesomePlacesSearchModel.fromJson(Map<String, dynamic> json) =>
@@ -79,5 +81,6 @@ class ParamSearchModel {
   final String value;
   final String key;
   final String? countries;
-  ParamSearchModel({required this.value, this.countries, required this.key});
+  final String? sessionToken;
+  ParamSearchModel({required this.value, this.countries, required this.key, this.sessionToken});
 }

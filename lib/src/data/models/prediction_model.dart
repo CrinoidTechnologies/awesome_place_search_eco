@@ -1,9 +1,10 @@
+import 'package:google_geocoding_api/google_geocoding_api.dart';
+
 import 'awesome_place_model.dart';
+import 'lat_lng_model.dart';
 
 class PredictionModel {
   final String? description;
-  double? latitude;
-  double? longitude;
 
   final List<MatchedSubstring>? matchedSubstrings;
   final String? placeId;
@@ -11,9 +12,13 @@ class PredictionModel {
   final StructuredFormatting? structuredFormatting;
   final List<Term>? terms;
   final List<String>? types;
+  GoogleGeocodingResult? geocodingLocation;
+  LatLngModel? latLngModel;
+  String? sessionToken;
+
   PredictionModel({
-    this.latitude,
-    this.longitude,
+    this.latLngModel,
+    this.geocodingLocation,
     this.description,
     this.matchedSubstrings,
     this.placeId,

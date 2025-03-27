@@ -2,12 +2,14 @@ import 'package:awesome_place_search/src/core/error/failures/i_failure.dart';
 import 'package:awesome_place_search/src/data/data_sources/get_search_remote_datasource.dart';
 import 'package:awesome_place_search/src/data/models/lat_lng_model.dart';
 import 'package:dartz/dartz.dart';
+import 'package:google_geocoding_api/google_geocoding_api.dart';
 
 import '../../core/error/exceptions/key_empty_exception.dart';
 import '../models/awesome_place_model.dart';
 
 abstract class IRepository {
   Future<Either<Failure, LatLngModel>> getLatLng({required String placeId});
+  Future<Either<Failure, GoogleGeocodingResult>> getPlaceDetail({required String placeId});
 
   Future<Either<Failure, AwesomePlacesSearchModel>> getPlace(
       {required ParamSearchModel param});
@@ -23,6 +25,18 @@ class GetSearchRepository implements IRepository {
       {required String placeId}) async {
     try {
       final res = await dataSource.getLatLng(param: placeId);
+      return Right(res);
+    } catch (e) {
+      return Left(ServerFailure(message: "Something went wrong"));
+    }
+  }
+
+
+  @override
+  Future<Either<Failure, GoogleGeocodingResult>> getPlaceDetail(
+      {required String placeId, String? sessionToken}) async {
+    try {
+      final res = await dataSource.getPlaceDetail(placeId: placeId, sessionToken: sessionToken);
       return Right(res);
     } catch (e) {
       return Left(ServerFailure(message: "Something went wrong"));

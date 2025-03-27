@@ -85,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   _line(
                       title: "Coordinate",
                       subTitle:
-                          "${prediction!.latitude}, ${prediction!.longitude}"),
+                          "${prediction!.latLngModel?.latModel}, ${prediction!.latLngModel?.lngModel}"),
                   _line(title: "PlaceId", subTitle: prediction!.placeId!),
                   _line(
                       title: "Secondary text",

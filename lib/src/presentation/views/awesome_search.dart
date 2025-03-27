@@ -1,14 +1,17 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:awesome_place_search/src/commons/widgets/custom_text_field.dart';
 import 'package:awesome_place_search/src/core/dependencies/dependencies.dart';
 import 'package:awesome_place_search/src/core/services/debouncer.dart';
+import 'package:awesome_place_search/src/data/models/lat_lng_model.dart';
 import 'package:awesome_place_search/src/data/models/prediction_model.dart';
 import 'package:awesome_place_search/src/presentation/controller/awesome_place_search_controller.dart';
 import 'package:awesome_place_search/src/presentation/controller/search_state.dart';
 import 'package:awesome_place_search/src/presentation/views/widgets/awesome_place_search_item.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
+import 'package:google_geocoding_api/google_geocoding_api.dart';
+import 'package:uuid/uuid.dart';
 
 ///[AwesomePlaceSearch]
 /// This is the Main Class
@@ -39,6 +42,7 @@ class AwesomePlaceSearch {
 
   final dependencies = Dependencies();
   AwesomePlaceSearchController? _controller;
+  final ResponseType responseType;
 
   AwesomePlaceSearch({
     required this.context,
@@ -60,6 +64,7 @@ class AwesomePlaceSearch {
     this.subtitleStyle,
     this.titleStyle,
     this.autofocus = false,
+    this.responseType = ResponseType.detail,
   }) {
     //init clean architecture dependency
 
@@ -78,6 +83,7 @@ class AwesomePlaceSearch {
 
   SearchState _searchState = SearchState.none;
   List<PredictionModel> _places = [];
+  var uuid = Uuid();
 
   ///[show]
   ///Show modal to search places
@@ -116,6 +122,8 @@ class AwesomePlaceSearch {
   ///Component that constitutes the body of the modal
   Widget _bodyModal({required double height}) {
     return StatefulBuilder(builder: (context, setState) {
+      String sessionToken = uuid.v4();
+      print("AwesomePlaceSearch new session, sessionToken: $sessionToken");
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -151,7 +159,7 @@ class AwesomePlaceSearch {
                             return;
                           }
 
-                          _searchData(state: setState);
+                          _searchData(state: setState, sessionToken: sessionToken);
                         });
                       },
                     ),
@@ -235,8 +243,6 @@ class AwesomePlaceSearch {
   ///[_item]
   ///Item of place result list
   Widget _item({required PredictionModel place}) {
-    log(place.latitude.toString());
-
     return AwesomePlaceSearchItem(
       title: place.description ?? "",
       searchedValue: _textSearch.text,
@@ -254,12 +260,12 @@ class AwesomePlaceSearch {
     );
   }
 
-  void _searchData({required StateSetter state}) async {
+  void _searchData({required StateSetter state, String? sessionToken}) async {
     state(() {
       _searchState = SearchState.loading;
     });
 
-    final result = await _controller?.getPlaces(value: _textSearch.text);
+    final result = await _controller?.getPlaces(value: _textSearch.text, sessionToken: sessionToken);
 
     result?.fold((left) {
       state(() {
@@ -274,16 +280,29 @@ class AwesomePlaceSearch {
   }
 
   void _tapItem({required PredictionModel place}) async {
-    final result = await _controller?.getLatLng(value: place.placeId ?? "");
+    Either? result;
+    if (responseType == ResponseType.latLng) {
+      result = await _controller?.getLatLng(value: place.placeId ?? "");
+    } else if (responseType == ResponseType.detail) {
+      result = await _controller?.getPlaceDetail(value: place.placeId ?? "", sessionToken: place.sessionToken);
+    }
     result?.fold((left) {
-      throw Exception("Was not possible to obtain the coordinates");
+      throw Exception("Was not possible to obtain the result");
     }, (right) {
-      place.latitude = right.latModel;
-      place.longitude = right.lngModel;
+      if(right is LatLngModel) {
+        place.latLngModel = right;
+      }
+      if(right is GoogleGeocodingResult) {
+        place.geocodingLocation = right;
+      }
       onTap(Future.value(place));
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
     });
   }
+}
+enum ResponseType{
+  latLng,
+  detail
 }

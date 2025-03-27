@@ -6,6 +6,7 @@ import 'package:awesome_place_search/src/core/client/http_client.dart';
 import 'package:awesome_place_search/src/core/error/exceptions/key_empty_exception.dart';
 import 'package:awesome_place_search/src/data/data_sources/iget_search_remote_datasource.dart';
 import 'package:awesome_place_search/src/data/models/lat_lng_model.dart';
+import 'package:google_geocoding_api/google_geocoding_api.dart';
 
 import '../../core/error/exceptions/network_exception.dart';
 import '../../core/error/exceptions/server_exception.dart';
@@ -49,6 +50,31 @@ class GetSearchRemoteDataSource implements IGetSearchRemoteDataSource {
   }
 
   @override
+  Future<GoogleGeocodingResult> getPlaceDetail({required String placeId, String? sessionToken}) async {
+    try {
+      var res = await http.get(
+        authority: url,
+        path: "maps/api/place/details/json",
+        param: {
+          "placeid": placeId,
+          "key": key,
+          "sessiontoken": sessionToken,
+        },
+      );
+      if (res.statusCode == 200) {
+        final value = json.decode(res.body);
+
+        final result = GoogleGeocodingResult.fromJson(value);
+
+        return result;
+      }
+      throw ServerException();
+    } catch (e) {
+      throw ServerException();
+    }
+  }
+
+  @override
   Future<AwesomePlacesSearchModel> getPlace(
       {required ParamSearchModel param}) async {
     log(param.key);
@@ -68,7 +94,7 @@ class GetSearchRemoteDataSource implements IGetSearchRemoteDataSource {
         );
         if (res.statusCode == 200) {
           final result = awesomePlacesModelFromJson(res.body);
-
+          result.sessionToken = param.sessionToken;
           return result;
         }
         throw ServerException();
