@@ -64,7 +64,7 @@ class GetSearchRemoteDataSource implements IGetSearchRemoteDataSource {
       if (res.statusCode == 200) {
         final value = json.decode(res.body);
 
-        final result = GoogleGeocodingResult.fromJson(value);
+        final result = GoogleGeocodingResult.fromJson(value['result']);
 
         return result;
       }
